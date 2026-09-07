@@ -108,6 +108,17 @@ const DEFAULT_CONTENIDO = {
       { etiqueta: 'Horario', valor: 'Lun a Vie 9:00–18:00', tipo: 'horario' },
     ],
   },
+  tema: {
+    // Paleta de marca global (panel Apariencia): se aplica a todos los
+    // visitantes. Valores iguales al default claro usan las variables CSS.
+    colors: {
+      bg: '#feffff',
+      'bg-mist': '#eff5f9',
+      steel: '#5d7a8c',
+      mist: '#9cafbe',
+      slate: '#3e4349',
+    },
+  },
 };
 
 const isPlainObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);

@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import servicesRoutes from './routes/services.routes.js';
+import categoriasRoutes from './routes/categorias.routes.js';
 import usersRoutes from './routes/users.routes.js';
 import appointmentsRoutes from './routes/appointments.routes.js';
 import authRoutes from './routes/auth.routes.js';
@@ -18,6 +19,8 @@ import sucursalesRoutes from './routes/sucursales.routes.js';
 import pagosRoutes from './routes/pagos.routes.js';
 import suscripcionesRoutes from './routes/suscripciones.routes.js';
 import contenidoRoutes from './routes/contenido.routes.js';
+import integracionesRoutes from './routes/integraciones.routes.js';
+import visitantesRoutes from './routes/visitantes.routes.js';
 import { procesarReservasOnline } from './services/appointments.service.js';
 
 const app = express();
@@ -31,6 +34,7 @@ app.get('/health', (req, res) => {
 });
 
 app.use('/api/services', servicesRoutes);
+app.use('/api/categorias', categoriasRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/appointments', appointmentsRoutes);
 app.use('/api/auth', authRoutes);
@@ -47,6 +51,8 @@ app.use('/api/sucursales', sucursalesRoutes);
 app.use('/api/pagos', pagosRoutes);
 app.use('/api/suscripciones', suscripcionesRoutes);
 app.use('/api/contenido', contenidoRoutes);
+app.use('/api/integraciones', integracionesRoutes);
+app.use('/api/visitantes', visitantesRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

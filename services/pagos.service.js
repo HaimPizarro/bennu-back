@@ -4,13 +4,11 @@ import { enviarPagoConfirmadoCita, enviarCanjeConfirmadoCita } from './email.ser
 import { crearNotificacion } from './notificaciones.service.js';
 import { getCombo } from './combos.service.js';
 import { getMembresia, isActiveSubscriber, aplicarMembresiaAprobada } from './suscripciones.service.js';
+import { getMpConfig } from './configuracion.service.js';
 
 const TABLE = 'pagos';
 
 const MP_URL = 'https://api.mercadopago.com';
-
-// Moneda del cobro: por defecto CLP (cuenta MP de Chile); override con env.
-const MONEDA = () => process.env.MERCADOPAGO_CURRENCY?.trim() || 'CLP';
 
 // Estado simplificado en nuestra tabla según el estado real de Mercado Pago.
 const ESTADO_MP = {
@@ -25,19 +23,21 @@ const ESTADO_MP = {
   charged_back: 'cancelado',
 };
 
-function accessToken() {
-  const token = process.env.MERCADOPAGO_ACCESS_TOKEN?.trim();
-  if (!token) {
-    throw new Error('MERCADOPAGO_ACCESS_TOKEN no está configurado en el .env');
+// Credenciales efectivas: config del panel (DB) con fallback al .env.
+async function mpConfigActual() {
+  const cfg = await getMpConfig();
+  if (!cfg.token) {
+    throw new Error('No se configuró el Access Token de Mercado Pago (panel Pagos y correo o .env)');
   }
-  return token;
+  return cfg;
 }
 
 async function mpFetch(path, options = {}) {
+  const cfg = await mpConfigActual();
   const res = await fetch(`${MP_URL}${path}`, {
     ...options,
     headers: {
-      Authorization: `Bearer ${accessToken()}`,
+      Authorization: `Bearer ${cfg.token}`,
       'Content-Type': 'application/json',
       ...(options.headers || {}),
     },
@@ -120,7 +120,7 @@ export async function crearPreferenciaReserva({ appointmentId }) {
         user_id: appointment.user_id || null,
         appointment_id: appointment.id,
         monto_total: monto,
-        moneda: MONEDA(),
+        moneda: (await getMpConfig()).currency || 'CLP',
         detalle: {
           descuento_suscripcion: descuentoSuscripcion,
           precio_original: precioOriginal,
@@ -153,7 +153,7 @@ export async function crearPreferenciaReserva({ appointmentId }) {
         title: titulo,
         description: `${nombreCliente} · ${String(appointment.fecha_hora).slice(0, 16).replace('T', ' ')} hs`,
         quantity: 1,
-        currency_id: MONEDA(),
+        currency_id: (await getMpConfig()).currency || 'CLP',
         unit_price: monto,
       },
     ],
@@ -217,7 +217,7 @@ export async function crearPreferenciaCanje({ pagoId }) {
         id: `combo-${combo.id}`,
         title: `Canje: ${combo.nombre}`,
         quantity: 1,
-        currency_id: MONEDA(),
+        currency_id: (await getMpConfig()).currency || 'CLP',
         unit_price: monto,
       },
     ],
@@ -284,7 +284,7 @@ export async function crearPreferenciaSuscripcion({ pagoId }) {
         title: titulo,
         description: descripcion,
         quantity: 1,
-        currency_id: MONEDA(),
+        currency_id: (await getMpConfig()).currency || 'CLP',
         unit_price: monto,
       },
     ],

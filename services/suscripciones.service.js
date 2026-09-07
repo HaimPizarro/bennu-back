@@ -1,5 +1,6 @@
 import { supabase, createClientWithToken } from '../config/supabase.js';
 import { crearNotificacion } from './notificaciones.service.js';
+import { getMpConfig } from './configuracion.service.js';
 
 const MEMBRESIA_TABLE = 'membresia';
 const SUSCRIPCIONES_TABLE = 'suscripciones';
@@ -7,7 +8,6 @@ const PAGOS_TABLE = 'pagos';
 const USERS_TABLE = 'users';
 
 const DIAS_VIGENCIA = 30;
-const MONEDA = () => process.env.MERCADOPAGO_CURRENCY?.trim() || 'CLP';
 
 // ============================================================
 // Planes de membresía (múltiples; el cliente elige uno)
@@ -215,7 +215,7 @@ export async function crearPagoSuscripcion(userId, planId) {
       tipo: 'suscripcion',
       user_id: userId,
       monto_total: monto,
-      moneda: MONEDA(),
+      moneda: (await getMpConfig()).currency || 'CLP',
       detalle: {
         concepto: plan.nombre || 'Membresía mensual',
         plan_id: plan.id,

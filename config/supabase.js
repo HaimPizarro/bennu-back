@@ -28,3 +28,12 @@ export function createServiceClient() {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }
+
+let serviceClient = null;
+
+// Cliente service_role memoizado para lecturas/escrituras de secretos
+// (configuracion_servicios). null si la clave no está configurada.
+export function getServiceClient() {
+  if (!serviceClient) serviceClient = createServiceClient();
+  return serviceClient;
+}

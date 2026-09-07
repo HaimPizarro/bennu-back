@@ -6,6 +6,7 @@ const router = Router();
 
 router.get('/', requireAuth, requireAdmin, usersController.listUsers);
 router.get('/clients', requireAuth, requireAdmin, usersController.listClients);
+router.put('/me', requireAuth, usersController.updateMe);
 router.get('/:id', usersController.getUser);
 router.get('/:id/ficha', requireAuth, usersController.getFicha);
 router.put('/:id/ficha', requireAuth, requireAdmin, usersController.updateFicha);

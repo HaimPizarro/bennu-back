@@ -6,5 +6,6 @@ const router = Router();
 
 router.get('/me', requireAuth, authController.me);
 router.post('/account-status', authController.accountStatus);
+router.post('/delete-account', requireAuth, authController.deleteAccount);
 
 export default router;

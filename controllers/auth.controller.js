@@ -1,5 +1,5 @@
 import { getSuscripcionActiva } from '../services/suscripciones.service.js';
-import { getAccountStatusByEmail } from '../services/auth.service.js';
+import { getAccountStatusByEmail, deleteOwnAccount as deleteAccountService } from '../services/auth.service.js';
 
 // GET /api/auth/me — current authenticated user + their app profile (rol)
 export async function me(req, res) {
@@ -41,5 +41,15 @@ export async function accountStatus(req, res) {
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+// POST /api/auth/delete-account — el usuario elimina su propia cuenta.
+export async function deleteAccount(req, res) {
+  try {
+    await deleteAccountService(req.user.id);
+    res.json({ success: true, data: null });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
   }
 }

@@ -31,6 +31,16 @@ export async function getUser(req, res) {
   }
 }
 
+// PUT /api/users/me — el propio usuario actualiza su nombre y teléfono.
+export async function updateMe(req, res) {
+  try {
+    const user = await usersService.updateOwnProfile(req.user.id, req.body);
+    res.json({ success: true, data: user });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+}
+
 export async function updatePoints(req, res) {
   try {
     const { id } = req.params;

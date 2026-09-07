@@ -94,6 +94,33 @@ export async function updateUser(id, payload) {
   return data;
 }
 
+// El propio usuario edita sus datos (nombre y teléfono). El email se gestiona
+// por Supabase y no se modifica desde acá.
+export async function updateOwnProfile(userId, payload) {
+  const existing = await getUserById(userId);
+  if (!existing) return null;
+
+  const update = {};
+  if (payload?.nombre !== undefined) {
+    const nombre = String(payload.nombre ?? '').replace(/\s+/g, ' ').trim();
+    if (!nombre) throw new Error('El nombre es obligatorio.');
+    update.nombre = nombre;
+  }
+  if (payload?.telefono !== undefined) {
+    update.telefono = String(payload.telefono ?? '').trim() || null;
+  }
+  if (Object.keys(update).length === 0) return existing;
+
+  const { data, error } = await supabase
+    .from(TABLE)
+    .update(update)
+    .eq('id', userId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 // Elimina un usuario (la FK a auth.users con CASCADE elimina la cuenta de auth).
 export async function deleteUser(id) {
   const { data, error } = await supabase.from(TABLE).delete().eq('id', id).select();

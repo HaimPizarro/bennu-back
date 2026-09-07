@@ -1,6 +1,7 @@
 import { supabase, createClientWithToken } from '../config/supabase.js';
 import { getSettings } from './settings.service.js';
 import { toUtcMs, toMinutes, dayOfWeek, utcTime, reservaVencida, maxDateISO } from './date.util.js';
+import { getMpConfig } from './configuracion.service.js';
 
 const TABLE = 'promotions';
 
@@ -467,7 +468,7 @@ export async function redeemCombo({ userId, comboId, fecha_hora, pagar_diferenci
         appointment_id: created[0]?.id || null,
         promotion_id: combo.id,
         monto_total: diferencia,
-        moneda: process.env.MERCADOPAGO_CURRENCY?.trim() || 'CLP',
+        moneda: (await getMpConfig()).currency || 'CLP',
         detalle: { puntos_a_descontar: aDescontar },
       })
       .select('id')

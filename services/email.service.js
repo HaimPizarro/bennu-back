@@ -1,41 +1,31 @@
 import nodemailer from 'nodemailer';
 import { supabase } from '../config/supabase.js';
+import { getEmailConfig } from './configuracion.service.js';
 
-// Envío de emails transaccionales con proveedor intercambiable por env.
-// - Si RESEND_API_KEY está configurada -> Resend (API REST, dominio verificado).
-// - Si SMTP_HOST/USER/PASS están configurados -> SMTP (hoy: Gmail app password).
-// - Sin ninguna credencial -> se loguea y no envía (nunca bloquea el flujo).
+// Envío de emails transaccionales con proveedor intercambiable (config del
+// panel "Pagos y correo" con fallback al .env).
+// - Resend (API REST) o SMTP (hoy: Gmail app password).
+// - Sin credenciales -> se loguea y no envía (nunca bloquea el flujo).
 
-const NOMBRE = process.env.EMAIL_FROM_NAME?.trim() || 'bennu';
-
-function provider() {
-  if (process.env.RESEND_API_KEY?.trim()) return 'resend';
-  if (process.env.SMTP_HOST?.trim() && process.env.SMTP_USER?.trim() && process.env.SMTP_PASS?.trim()) {
-    return 'smtp';
-  }
-  return null;
+function fromStr(cfg) {
+  const nombre = cfg.fromName || 'bennu';
+  const address = cfg.from || '';
+  return nombre && address ? `"${nombre}" <${address}>` : address || nombre;
 }
 
-let transport;
-function getTransport() {
-  if (!transport) {
-    transport = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: Number(process.env.SMTP_PORT) === 465,
-      auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-    });
-  }
-  return transport;
-}
-
-function from() {
-  const address = process.env.EMAIL_FROM?.trim() || process.env.SMTP_USER?.trim() || '';
-  return NOMBRE && address ? `"${NOMBRE}" <${address}>` : address || NOMBRE;
+function buildTransport(cfg) {
+  const smtp = cfg.smtp;
+  return nodemailer.createTransport({
+    host: smtp.host,
+    port: Number(smtp.port) || 587,
+    secure: Boolean(smtp.secure),
+    auth: { user: smtp.user, pass: smtp.pass },
+  });
 }
 
 export async function enviarEmail({ to, subject, html }) {
-  const prov = provider();
+  const cfg = await getEmailConfig();
+  const prov = cfg.provider;
   if (!prov) {
     console.warn(`[email] sin credenciales configuradas (SMTP o RESEND_API_KEY) — no se envió a ${to}`);
     return { skipped: true };
@@ -49,17 +39,19 @@ export async function enviarEmail({ to, subject, html }) {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${process.env.RESEND_API_KEY.trim()}`,
+        Authorization: `Bearer ${cfg.resendKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ from: from(), to, subject, html }),
+      body: JSON.stringify({ from: fromStr(cfg), to, subject, html }),
     });
     const json = await res.json().catch(() => null);
     if (!res.ok) throw new Error(`Resend (${res.status}): ${json?.message || res.statusText}`);
     return { ok: true, id: json?.id };
   }
 
-  await getTransport().sendMail({ from: from(), to, subject, html });
+  // El transporte se construye por envío para que un cambio de credenciales en
+  // el panel aplique sin reiniciar (volumen bajo).
+  await buildTransport(cfg).sendMail({ from: fromStr(cfg), to, subject, html });
   return { ok: true };
 }
 
