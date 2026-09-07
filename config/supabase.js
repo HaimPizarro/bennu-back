@@ -18,3 +18,13 @@ export function createClientWithToken(token) {
     },
   });
 }
+
+// Cliente con la service role key (solo uso puntual en el backend, nunca en el
+// frontend). Devuelve null si la clave no está configurada para degradar bien.
+export function createServiceClient() {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!key) return null;
+  return createClient(supabaseUrl, key, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}

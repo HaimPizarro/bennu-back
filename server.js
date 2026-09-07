@@ -17,6 +17,7 @@ import googleRoutes from './routes/google.routes.js';
 import sucursalesRoutes from './routes/sucursales.routes.js';
 import pagosRoutes from './routes/pagos.routes.js';
 import suscripcionesRoutes from './routes/suscripciones.routes.js';
+import contenidoRoutes from './routes/contenido.routes.js';
 import { procesarReservasOnline } from './services/appointments.service.js';
 
 const app = express();
@@ -45,6 +46,7 @@ app.use('/api/google', googleRoutes);
 app.use('/api/sucursales', sucursalesRoutes);
 app.use('/api/pagos', pagosRoutes);
 app.use('/api/suscripciones', suscripcionesRoutes);
+app.use('/api/contenido', contenidoRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

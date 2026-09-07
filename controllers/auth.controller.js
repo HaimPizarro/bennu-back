@@ -1,4 +1,5 @@
 import { getSuscripcionActiva } from '../services/suscripciones.service.js';
+import { getAccountStatusByEmail } from '../services/auth.service.js';
 
 // GET /api/auth/me — current authenticated user + their app profile (rol)
 export async function me(req, res) {
@@ -18,6 +19,25 @@ export async function me(req, res) {
         suscripcion_plan_id: suscripcion?.membresia?.id ?? suscripcion?.membresia_id ?? null,
         suscripcion_plan_nombre: suscripcion?.membresia?.nombre || null,
       },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+// POST /api/auth/account-status — si un email ya tiene cuenta y con qué
+// proveedor (google vs email/contraseña). Lo usa la pantalla de registro para
+// avisar sin intentar crear un duplicado.
+export async function accountStatus(req, res) {
+  try {
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
+      return res.status(400).json({ success: false, message: 'Email inválido' });
+    }
+    const data = await getAccountStatusByEmail(email);
+    res.json({
+      success: true,
+      data: data || { exists: null, providers: [] },
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
